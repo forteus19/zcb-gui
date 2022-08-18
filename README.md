@@ -13,12 +13,14 @@
 ![zcb](https://cdn.discordapp.com/attachments/783966433641365504/964760765225652274/zcb.gif)
 
 # Download
-[For binary builds with Pyinstaller, click here](https://github.com/zeopticz/zcb-2.0/releases/)
+[For binary builds with Pyinstaller, click here](https://github.com/Ploosho/zcb-2.0/releases/)
 
 # Supported files (Macros)
 [Echo](https://discord.gg/7yEHbBVswh) `(.echo)` (Make sure you don't record it in binary, if you do so, convert it.)
 
 [TASbot](https://discord.gg/RbWPSYPyrS) `(.json)`
+
+[MHR](https://discord.gg/nTwJCrxz3r) `(.mhr.json)`
 
 [zBot](https://discord.gg/nTwJCrxz3r) `(.zbf)`
 
