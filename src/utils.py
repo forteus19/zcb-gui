@@ -1,5 +1,4 @@
 import random, sys, json, struct
-import re
 from pydub import AudioSegment
 from tqdm import tqdm
 from os import walk, path, _exit, listdir, mkdir
