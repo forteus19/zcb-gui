@@ -1,8 +1,7 @@
-import json
+import random, sys, json, struct
+import re
 from pydub import AudioSegment
-import random
 from tqdm import tqdm
-import sys
 from os import walk, path, _exit, listdir, mkdir
 
 class colors:
@@ -42,6 +41,57 @@ class log:
         print(f'[{colors.fg["green"]}+{colors.reset}]{colors.fg["green"]} SUCCESS: {colors.reset}{text}{colors.reset}')
 
 class parser:
+    def parse_zbf(replay_file):
+        delta = struct.unpack('f', replay_file[0:4])[0]
+        speed = struct.unpack('f', replay_file[4:8])[0]
+        replay_fps = 1 / delta / speed
+        if replay_fps == 0:
+            log.printerr("Macro corrupted.")
+            input()
+            exit()
+        
+        last_click_action = False
+        last_p2_click_action = False
+        p1_clicks = []
+        p2_clicks = []
+
+        i = 8
+        while i < len(replay_file):
+            last_frame = struct.unpack('i', replay_file[i:i+4])[0]
+            last_action = replay_file[i+4] == 0x31
+            is_p2 = replay_file[i+5] == 0x31
+            is_action = True
+
+            if not is_p2: # If the action is from player 1.
+                if last_action and not last_click_action and is_action:
+                    last_click_action = True
+                    '''
+                    list of lists:
+                    [[frame, 'click'/'release'], ...]
+                    '''
+                    p1_clicks.append([last_frame, 'click'])
+
+                elif not last_action and last_click_action and is_action:
+                    last_click_action = False
+                    p1_clicks.append([last_frame, 'release'])
+            else: # If the action is from player 2.
+                if last_action and not last_p2_click_action and is_action:
+                    last_p2_click_action = True
+                    '''
+                    list of lists:
+                    [[frame, 'click'/'release'], ...]
+                    '''
+                    p2_clicks.append([last_frame, 'click'])
+
+                elif not last_action and last_p2_click_action and is_action:
+                    last_p2_click_action = False
+                    p2_clicks.append([last_frame, 'release'])
+                else:
+                    pass
+            i += 6
+        
+        return p1_clicks, p2_clicks, replay_fps
+    
     def parse_echo(replay_file):
         '''
         Parses .echo files.
@@ -58,11 +108,11 @@ class parser:
         last_p2_click_action = False
 
         if replay_fps is None:
-            printerr("Macro corrupted.")
+            log.printerr("Macro corrupted.")
             input()
             exit()
         if replay_data is None:
-            printerr("Empty macro.")
+            log.printerr("Empty macro.")
             input()
             exit()
 
@@ -123,7 +173,7 @@ class parser:
         last_p2_click_action = False
 
         if replay_fps is None or replay_data is None:
-            printerr("Corrupted macro.")
+            log.printerr("Corrupted macro.")
             input()
             exit()
 

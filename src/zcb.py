@@ -12,7 +12,7 @@ from tkinter import messagebox as mb
 
 clear()
 
-ALLOWED_FILENAMES = ['echo', 'json']
+ALLOWED_FILENAMES = ['echo', 'json', 'zbf']
 
 print('''
 ███████╗ ██████╗██████╗ 
@@ -64,6 +64,26 @@ elif macro_input.endswith('json'):
     with open(macro_input, 'r') as f:
         try:
             p1_macro, p2_macro, replay_fps = parser.parse_tasbot(f.read())
+        except Exception as e:
+            log.printerr(f'An Error occured while parsing replay!\nIf the issue persists, please contact support!\nError: {traceback.format_exc()}')
+            input()
+            sys.exit()
+        f.close()
+if macro_input.endswith('echo'):
+    log.printinfo(f'Parsing File: {macro_input}')
+    with open(macro_input, 'r') as f:
+        try:
+            p1_macro, p2_macro, replay_fps = parser.parse_echo(f.read())
+        except Exception as e:
+            log.printerr(f'An Error occured while parsing replay!\nIf the issue persists, please contact support!\nError: {traceback.format_exc()}')
+            input()
+            sys.exit()
+        f.close()
+elif macro_input.endswith('zbf'):
+    log.printinfo(f'Parsing File: {macro_input}')
+    with open(macro_input, 'rb') as f:
+        try:
+            p1_macro, p2_macro, replay_fps = parser.parse_zbf(f.read())
         except Exception as e:
             log.printerr(f'An Error occured while parsing replay!\nIf the issue persists, please contact support!\nError: {traceback.format_exc()}')
             input()
