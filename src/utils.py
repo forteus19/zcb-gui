@@ -41,6 +41,14 @@ class log:
 
 class parser:
     def parse_zbf(replay_file):
+        '''
+        Parses .zbf files.
+        Returns:
+        p1_clicks, p2_clicks, replay_fps
+        ~~~~~~~~~  ~~~~~~~~~  ~~~~~~~~~~
+        [frame, 'click'/'release']
+        '''
+
         delta = struct.unpack('f', replay_file[0:4])[0]
         speed = struct.unpack('f', replay_file[4:8])[0]
         replay_fps = 1 / delta / speed
@@ -155,6 +163,63 @@ class parser:
                     pass
         
         return p1_clicks, p2_clicks, replay_fps # Return parsed macro.
+
+    def parse_mhrj(replay_file):
+        '''
+        Parses .json (mhr) files.
+        Returns:
+        p1_clicks, p2_clicks, replay_fps
+        ~~~~~~~~~  ~~~~~~~~~  ~~~~~~~~~~
+        [frame, 'click'/'release']
+        '''
+        # Define basic info.
+        replay = json.loads(replay_file)
+        replay_fps = replay.get('meta').get('fps')
+        replay_data = replay.get('events')
+        last_click_action = False
+        last_p2_click_action = False
+
+        if replay_fps is None or replay_data is None:
+            log.printerr("Corrupted macro.")
+            input()
+            exit()
+
+        p1_clicks = []
+        p2_clicks = []
+
+        for frame in replay_data: # Iterate through every frame of the macro.
+            last_frame = frame.get('frame')
+            
+            is_p2 = frame.get('p2') or False
+            last_action = frame.get('down')
+            is_action = True
+
+            if not is_p2: # If the action is from player 1.
+                if last_action and not last_click_action and is_action:
+                    last_click_action = True
+                    '''
+                    list of lists:
+                    [[frame, 'click'/'release'], ...]
+                    '''
+                    p1_clicks.append([last_frame, 'click'])
+                elif not last_action and last_click_action and is_action:
+                    last_click_action = False
+                    p1_clicks.append([last_frame, 'release'])
+                else:
+                    pass
+            else: # If the action is from player 2.
+                if last_action and not last_p2_click_action and is_action:
+                    last_p2_click_action = True
+                    '''
+                    list of lists:
+                    [[frame, 'click'/'release'], ...]
+                    '''
+                    p2_clicks.append([last_frame, 'click'])
+                elif not last_action and last_p2_click_action and is_action:
+                    last_p2_click_action = False
+                    p2_clicks.append([last_frame, 'release'])
+
+        return p1_clicks, p2_clicks, replay_fps
 
     def parse_tasbot(replay_file):
         '''
