@@ -20,6 +20,8 @@
 
 [TASbot](https://discord.gg/RbWPSYPyrS) `(.json)`
 
+[zBot](https://discord.gg/nTwJCrxz3r) `(.zbf)`
+
 # Click pack guide
 
  
