@@ -1,0 +1,61 @@
+{
+  "CTk": {
+    "fg_color": "#111111"
+  },
+  "CTkButton": {
+    "corner_radius": 0,
+    "border_width": 0,
+    "border_color": "#000000",
+    "fg_color": "#9b4db3",
+    "hover_color": "#a064b3",
+    "text_color": "#ffffff",
+    "text_color_disabled": "#ffffff"
+  },
+  "CTkFont": {
+    "Windows": {
+      "family": "Segoe UI",
+      "size": 12,
+      "weight": "normal"
+    },
+    "macOS": {
+      "family": "SF Display",
+      "size": 12,
+      "weight": "normal"
+    },
+    "Linux": {
+      "family": "Ubuntu",
+      "size": 12,
+      "weight": "normal"
+    }
+  },
+  "CTkFrame": {
+    "corner_radius": 0,
+    "border_width": 0,
+    "border_color": "#000000",
+    "fg_color": "#222222",
+    "top_fg_color": "#222222"
+  },
+  "CTkLabel": {
+    "corner_radius": 0,
+    "fg_color": "transparent",
+    "text_color": "#ffffff"
+  },
+  "CTkCheckbox": {
+    "corner_radius": 0,
+    "border_width": 2,
+    "border_color": "#ffffff",
+    "fg_color": "#9b4db3",
+    "hover_color": "#a064b3",
+    "text_color": "#ffffff",
+    "text_color_disabled": "#ffffff",
+    "checkmark_color": "#ffffff"
+  },
+  "CTkEntry": {
+    "corner_radius": 0,
+    "border_width": 0,
+    "border_color": "#000000",
+    "fg_color": "#000000",
+    "text_color": "#ffffff",
+    "placeholder_text_color": "#aaaaaa"
+  }
+}
