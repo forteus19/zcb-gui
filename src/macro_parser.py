@@ -17,8 +17,6 @@ class parser:
         replay_fps = 1 / delta / speed
         if replay_fps == 0:
             log.printerr("Macro corrupted.")
-            input()
-            exit()
         
         last_click_action = False
         last_p2_click_action = False
@@ -79,12 +77,8 @@ class parser:
 
         if replay_fps is None:
             log.printerr("Macro corrupted.")
-            input()
-            exit()
         if replay_data is None:
             log.printerr("Empty macro.")
-            input()
-            exit()
 
         p1_clicks = []
         p2_clicks = []
@@ -144,8 +138,6 @@ class parser:
 
         if replay_fps is None or replay_data is None:
             log.printerr("Corrupted macro.")
-            input()
-            exit()
 
         p1_clicks = []
         p2_clicks = []
@@ -201,8 +193,6 @@ class parser:
 
         if replay_fps is None or replay_data is None:
             log.printerr("Corrupted macro.")
-            input()
-            exit()
 
         p1_clicks = []
         p2_clicks = []
@@ -239,4 +229,66 @@ class parser:
                 last_click_action = False
                 p2_clicks.append([last_frame, 'release'])
 
+        return p1_clicks, p2_clicks, replay_fps
+    def parse_rply(replay_file):
+        '''
+        Parses .replay (ReplayBot) files.
+        Returns:
+        p1_clicks, p2_clicks, replay_fps
+        ~~~~~~~~~  ~~~~~~~~~  ~~~~~~~~~~
+        [frame, 'click'/'release']
+        '''
+        if struct.unpack('4s', replay_file[0:4])[0] != b'RPLY':
+            log.printerr("Macro is not a ReplayBot macro.")
+            return None, None, None
+        if replay_file[5] != 0x01:
+            log.printerr("ZCB cannot process Xpos macros.")
+            return None, None, None
+        
+        replay_fps = struct.unpack('f', replay_file[6:10])[0]
+        replay_data = replay_file[10:]
+
+        p1_clicks = []
+        p2_clicks = []
+
+        # each frame is 5 bytes
+        '''
+        Frame format:
+        Frame: int (4 bytes)
+        Player/down: byte (1 byte)
+        '''
+        for frame in range(0, len(replay_data), 5): # Iterate through every frame of the macro.
+            last_frame = struct.unpack('i', replay_data[frame:frame+4])[0]
+
+            # return true if the byte is 0x02 or 0x03
+            check_if_p2 = lambda: struct.unpack('b', replay_data[frame+4:frame+5])[0] in (0x02, 0x03)
+            is_p2 = False
+            if check_if_p2() in (0x02, 0x03):
+                is_p2 = True
+            # return true if the byte is 0x01 or 0x03
+            check_last_action = lambda: struct.unpack('b', replay_data[frame+4:frame+5])[0] in (0x01, 0x03)
+            last_action = False
+            if check_last_action() in (0x01, 0x03):
+                last_action = True
+
+            if not is_p2:
+                if last_action:
+                    '''
+                    list of lists:
+                    [[frame, 'click'/'release'], ...]
+                    '''
+                    p1_clicks.append([last_frame, 'click'])
+                elif not last_action:
+                    p1_clicks.append([last_frame, 'release'])
+            else:
+                if last_action:
+                    '''
+                    list of lists:
+                    [[frame, 'click'/'release'], ...]
+                    '''
+                    p2_clicks.append([last_frame, 'click'])
+                elif not last_action:
+                    p2_clicks.append([last_frame, 'release'])
+        
+        print(p1_clicks)
         return p1_clicks, p2_clicks, replay_fps

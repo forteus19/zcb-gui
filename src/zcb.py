@@ -1,4 +1,3 @@
-import time
 import traceback
 import customtkinter as ctk
 from tkinter import filedialog
@@ -86,25 +85,38 @@ class ZCB_GUI(ctk.CTk):
     
     def sel_macro(self):
         self.MACRO_PATH = filedialog.askopenfilename(filetypes=(
+            ("All files", "*.*"),
             ("MHR Json", "*.mhr.json"),
             ("TASBOT", "*.json"),
             ("Echo", "*.echo"),
             ("ZBot", "*.zbf"),
-            ("All files", "*.*")
+            ("ReplayBot", "*.replay"),
         ))
         log.printinfo(f"Selected macro: {self.MACRO_PATH}")
-        with open(self.MACRO_PATH, "r") as f:
-            try:
-                if self.MACRO_PATH.endswith(".mhr.json"):
-                    self.P1_MACRO, self.P2_MACRO, self.REPLAY_FPS = parser.parse_mhrj(f.read())
-                elif self.MACRO_PATH.endswith(".json"):
-                    self.P1_MACRO, self.P2_MACRO, self.REPLAY_FPS = parser.parse_tasbot(f.read())
-                elif self.MACRO_PATH.endswith(".echo"):
-                    self.P1_MACRO, self.P2_MACRO, self.REPLAY_FPS = parser.parse_echo(f.read())
-                elif self.MACRO_PATH.endswith(".zbf"):
-                    self.P1_MACRO, self.P2_MACRO, self.REPLAY_FPS = parser.parse_zbot(f.read())
-            except:
-                log.printerr(f'An Error occured while parsing replay!\nIf the issue persists, please contact support!\nError: {traceback.format_exc()}')
+        try:
+            if self.MACRO_PATH.endswith(".mhr.json"):
+                f = open(self.MACRO_PATH, "r")
+                self.P1_MACRO, self.P2_MACRO, self.REPLAY_FPS = parser.parse_mhrj(f.read())
+            elif self.MACRO_PATH.endswith(".json"):
+                f = open(self.MACRO_PATH, "r")
+                self.P1_MACRO, self.P2_MACRO, self.REPLAY_FPS = parser.parse_tasbot(f.read())
+            elif self.MACRO_PATH.endswith(".echo"):
+                f = open(self.MACRO_PATH, "r")
+                self.P1_MACRO, self.P2_MACRO, self.REPLAY_FPS = parser.parse_echo(f.read())
+            elif self.MACRO_PATH.endswith(".zbf"):
+                # since zbot files are binary, we need to open them in binary mode
+                f = open(self.MACRO_PATH, "rb")
+                self.P1_MACRO, self.P2_MACRO, self.REPLAY_FPS = parser.parse_zbot(f.read())
+            elif self.MACRO_PATH.endswith(".replay"):
+                # since replaybot files are binary, we need to open them in binary mode
+                f = open(self.MACRO_PATH, "rb")
+                self.P1_MACRO, self.P2_MACRO, self.REPLAY_FPS = parser.parse_rply(f.read())
+            elif self.MACRO_PATH == "":
+                pass
+            else:
+                log.printerr("Invalid macro file type! Please choose a supported macro file type.")
+        except:
+            log.printerr(f'An Error occured while parsing replay!\nIf the issue persists, please contact support!\nError: {traceback.format_exc()}')
     
     def sel_clickpack(self):
         self.CLICKPACK_PATH = filedialog.askdirectory()
@@ -119,13 +131,13 @@ class ZCB_GUI(ctk.CTk):
         log.printinfo(f"Selected output: {self.OUTPUT_PATH}")
 
     def generate(self):
-        if self.MACRO_PATH == None:
+        if self.MACRO_PATH in ("", None):
             log.printerr("Please select a macro!")
             return
-        if self.CLICKPACK_PATH == None:
+        if self.CLICKPACK_PATH in ("", None):
             log.printerr("Please select a clickpack!")
             return
-        if self.OUTPUT_PATH == None:
+        if self.OUTPUT_PATH in ("", None):
             log.printerr("Please select an output path!")
             return
 
@@ -149,7 +161,7 @@ class ZCB_GUI(ctk.CTk):
                 output_filename=self.OUTPUT_PATH
             )
             log.printsuccess("Clicks generated successfully!\nOutput: " + self.OUTPUT_PATH)
-        except Exception as e:
+        except:
             log.printerr(f'An Error occured while generating clicks!\nIf the issue persists, please contact support!\nError: {traceback.format_exc()}')
 
 if __name__ == "__main__":
