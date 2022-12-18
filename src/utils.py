@@ -3,280 +3,7 @@ from pydub import AudioSegment
 from tqdm import tqdm
 from os import walk, path, _exit, listdir, mkdir
 
-class colors:
-    reset = '\033[0m'
-    fg = {
-        'red': '\033[31m',
-        'green': '\033[32m',
-        'yellow': '\033[33m',
-        'blue': '\033[34m',
-        'magenta': '\033[35m',
-        'cyan': '\033[36m',
-        'white': '\033[37m'
-    }
-
-    bg = {
-        'red': '\033[41m',
-        'green': '\033[42m',
-        'yellow': '\033[43m',
-        'blue': '\033[44m',
-        'magenta': '\033[45m',
-        'cyan': '\033[46m',
-        'white': '\033[47m'
-    }
-
-def cprint(text, color, bg=False):
-    background = colors.bg[bg] if bg else ''
-    print(colors.fg[color] + background + text + colors.reset)
-
-class log:
-    def printwarn(text):
-        print(f'[{colors.fg["yellow"]}!{colors.reset}]{colors.fg["yellow"]} WARNING: {colors.reset}{text}{colors.reset}')
-    def printerr(text):
-        print(f'[{colors.fg["red"]}-{colors.reset}]{colors.fg["red"]} ERROR: {colors.reset}{text}{colors.reset}')
-    def printinfo(text):
-        print(f'[{colors.fg["blue"]}i{colors.reset}]{colors.fg["blue"]} INFO: {colors.reset}{text}{colors.reset}')
-    def printsuccess(text):
-        print(f'[{colors.fg["green"]}+{colors.reset}]{colors.fg["green"]} SUCCESS: {colors.reset}{text}{colors.reset}')
-
-class parser:
-    def parse_zbf(replay_file):
-        '''
-        Parses .zbf files.
-        Returns:
-        p1_clicks, p2_clicks, replay_fps
-        ~~~~~~~~~  ~~~~~~~~~  ~~~~~~~~~~
-        [frame, 'click'/'release']
-        '''
-
-        delta = struct.unpack('f', replay_file[0:4])[0]
-        speed = struct.unpack('f', replay_file[4:8])[0]
-        replay_fps = 1 / delta / speed
-        if replay_fps == 0:
-            log.printerr("Macro corrupted.")
-            input()
-            exit()
-        
-        last_click_action = False
-        last_p2_click_action = False
-        p1_clicks = []
-        p2_clicks = []
-
-        i = 8
-        while i < len(replay_file):
-            last_frame = struct.unpack('i', replay_file[i:i+4])[0]
-            last_action = replay_file[i+4] == 0x31
-            is_p2 = replay_file[i+5] == 0x31
-            is_action = True
-
-            if not is_p2: # If the action is from player 1.
-                if last_action and not last_click_action and is_action:
-                    last_click_action = True
-                    '''
-                    list of lists:
-                    [[frame, 'click'/'release'], ...]
-                    '''
-                    p1_clicks.append([last_frame, 'click'])
-
-                elif not last_action and last_click_action and is_action:
-                    last_click_action = False
-                    p1_clicks.append([last_frame, 'release'])
-            else: # If the action is from player 2.
-                if last_action and not last_p2_click_action and is_action:
-                    last_p2_click_action = True
-                    '''
-                    list of lists:
-                    [[frame, 'click'/'release'], ...]
-                    '''
-                    p2_clicks.append([last_frame, 'click'])
-
-                elif not last_action and last_p2_click_action and is_action:
-                    last_p2_click_action = False
-                    p2_clicks.append([last_frame, 'release'])
-                else:
-                    pass
-            i += 6
-        
-        return p1_clicks, p2_clicks, replay_fps
-    
-    def parse_echo(replay_file):
-        '''
-        Parses .echo files.
-        Returns:
-        p1_clicks, p2_clicks, replay_fps
-        ~~~~~~~~~  ~~~~~~~~~  ~~~~~~~~~~
-        [frame, 'click'/'release']
-        '''
-        # Define basic info.
-        replay = json.loads(replay_file)
-        replay_fps = replay.get('FPS')
-        replay_data = replay.get('Echo Replay')
-        last_click_action = False
-        last_p2_click_action = False
-
-        if replay_fps is None:
-            log.printerr("Macro corrupted.")
-            input()
-            exit()
-        if replay_data is None:
-            log.printerr("Empty macro.")
-            input()
-            exit()
-
-        p1_clicks = []
-        p2_clicks = []
-
-        for frame in replay_data: # Iterate through every frame of the macro.
-            last_frame = frame.get('Frame')
-            last_action = frame.get('Hold')
-            is_p2 = frame.get("Player 2")
-            try:
-                is_action = frame.get('Action')
-            except Exception:
-                is_action = True
-
-            if not is_p2: # If the action is from player 1.
-                if last_action and not last_click_action and is_action:
-                    last_click_action = True
-                    '''
-                    list of lists:
-                    [[frame, 'click'/'release'], ...]
-                    '''
-                    p1_clicks.append([last_frame, 'click'])
-
-                elif not last_action and last_click_action and is_action:
-                    last_click_action = False
-                    p1_clicks.append([last_frame, 'release'])
-            else: # If the action is from player 2.
-                if last_action and not last_p2_click_action and is_action:
-                    last_p2_click_action = True
-                    '''
-                    list of lists:
-                    [[frame, 'click'/'release'], ...]
-                    '''
-                    p2_clicks.append([last_frame, 'click'])
-
-                elif not last_action and last_p2_click_action and is_action:
-                    last_p2_click_action = False
-                    p2_clicks.append([last_frame, 'release'])
-                else:
-                    pass
-        
-        return p1_clicks, p2_clicks, replay_fps # Return parsed macro.
-
-    def parse_mhrj(replay_file):
-        '''
-        Parses .json (mhr) files.
-        Returns:
-        p1_clicks, p2_clicks, replay_fps
-        ~~~~~~~~~  ~~~~~~~~~  ~~~~~~~~~~
-        [frame, 'click'/'release']
-        '''
-        # Define basic info.
-        replay = json.loads(replay_file)
-        replay_fps = replay.get('meta').get('fps')
-        replay_data = replay.get('events')
-        last_click_action = False
-        last_p2_click_action = False
-
-        if replay_fps is None or replay_data is None:
-            log.printerr("Corrupted macro.")
-            input()
-            exit()
-
-        p1_clicks = []
-        p2_clicks = []
-
-        for frame in replay_data: # Iterate through every frame of the macro.
-            last_frame = frame.get('frame')
-            
-            is_p2 = frame.get('p2') or False
-            last_action = frame.get('down')
-            is_action = True
-
-            if not is_p2: # If the action is from player 1.
-                if last_action and not last_click_action and is_action:
-                    last_click_action = True
-                    '''
-                    list of lists:
-                    [[frame, 'click'/'release'], ...]
-                    '''
-                    p1_clicks.append([last_frame, 'click'])
-                elif not last_action and last_click_action and is_action:
-                    last_click_action = False
-                    p1_clicks.append([last_frame, 'release'])
-                else:
-                    pass
-            else: # If the action is from player 2.
-                if last_action and not last_p2_click_action and is_action:
-                    last_p2_click_action = True
-                    '''
-                    list of lists:
-                    [[frame, 'click'/'release'], ...]
-                    '''
-                    p2_clicks.append([last_frame, 'click'])
-                elif not last_action and last_p2_click_action and is_action:
-                    last_p2_click_action = False
-                    p2_clicks.append([last_frame, 'release'])
-
-        return p1_clicks, p2_clicks, replay_fps
-
-    def parse_tasbot(replay_file):
-        '''
-        Parses .json (tasbot) files.
-        Returns:
-        p1_clicks, p2_clicks, replay_fps
-        ~~~~~~~~~  ~~~~~~~~~  ~~~~~~~~~~
-        [frame, 'click'/'release']
-        '''
-        # Define basic info.
-        replay = json.loads(replay_file)
-        replay_fps = replay.get('fps')
-        replay_data = replay.get('macro')
-        last_click_action = False
-        last_p2_click_action = False
-
-        if replay_fps is None or replay_data is None:
-            log.printerr("Corrupted macro.")
-            input()
-            exit()
-
-        p1_clicks = []
-        p2_clicks = []
-
-        for frame in replay_data: # Iterate through every frame of the macro.
-            last_frame = frame.get('frame')
-            
-            player_1_frame = frame.get('player_1')
-            player_2_frame = frame.get('player_2')
-
-            last_p1_action = player_1_frame.get('click') == 1
-            last_p2_action = player_2_frame.get('click') == 1
-
-            if not last_click_action and last_p1_action:
-                last_click_action = True
-                '''
-                list of lists:
-                [[frame, 'click'/'release'], ...]
-                '''
-                p1_clicks.append([last_frame, 'click'])
-            elif not last_p1_action and last_click_action: # If the action is from player 1.
-                last_p2_click_action = False
-                p1_clicks.append([last_frame, 'release'])
-
-            if not last_p2_click_action and last_p2_action: # If the action is from player 2.
-                last_p2_click_action = True
-
-                '''
-                list of lists:
-                [[frame, 'click'/'release'], ...]
-                '''
-                p2_clicks.append([last_frame, 'click'])
-            elif not last_p2_action and last_p2_click_action:
-                last_click_action = False
-                p2_clicks.append([last_frame, 'release'])
-
-        return p1_clicks, p2_clicks, replay_fps
+from log import log
 
 def discover_clicks(folder: str):
     '''Processes a clickpack.
@@ -367,7 +94,7 @@ def discover_clicks(folder: str):
                             log.printerr(f'Failed to process "{click_path}", perhaps it\'s not a .wav?')
     
     log.printinfo(f'Processing Player 2 clicks.')
-    for folder in p1_click_folders:
+    for folder in p2_click_folders:
         log.printinfo(f'Current Directory: {folder}')
         for (_, _, filenames) in walk(folder):
             log.printinfo(f'This folder contains: {filenames}')
@@ -417,8 +144,6 @@ def discover_clicks(folder: str):
 
     if p1_clicks == []:
         log.printerr(f'Player 1 has no clicks! Please follow the click format.')
-        input('Press ENTER to continue...')
-        _exit(0)
     if p2_clicks == []: 
         log.printwarn('Player 2 has no clicks! Using Player 1 clicks.')
         p2_clicks = p1_clicks
@@ -444,7 +169,7 @@ def discover_clicks(folder: str):
         log.printwarn('Player 2 has no softreleases! Using Player 2 releases.')
         p2_softreleases = p2_releases
     
-    log.printsuccess(f'Complete! Please check the log for any Errors, and press ENTER when ready.')
+    log.printsuccess(f'Complete! Please check the log for any errors.')
 
     '''Variables explanation
     
@@ -499,7 +224,7 @@ def generate_clicks(
                     replay_fps,
 
                     softclick_duration_option,
-                    macro_filename,
+                    output_filename,
                     use_sound_pitch
                 ):
 
@@ -646,9 +371,5 @@ def generate_clicks(
     
     pbar.close()
 
-    if not path.isdir("output"):
-        mkdir("output")
-    export_path = path.join(get_script_path(), 'output', macro_filename + '.wav')
-
     print('\nExporting...')
-    output_sound.export(export_path, format="wav")
+    output_sound.export(output_filename, format="wav")
