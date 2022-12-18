@@ -203,6 +203,12 @@ class parser:
             player_1_frame = frame.get('player_1')
             player_2_frame = frame.get('player_2')
 
+            '''
+            2 = click
+            1 = release
+            0 = nothing
+            '''
+
             last_p1_action = player_1_frame.get('click') == 1
             last_p2_action = player_2_frame.get('click') == 1
 
@@ -251,44 +257,50 @@ class parser:
         p1_clicks = []
         p2_clicks = []
 
+        last_click_action = False
+        last_p2_click_action = False
+
         # each frame is 5 bytes
         '''
         Frame format:
         Frame: int (4 bytes)
-        Player/down: byte (1 byte)
+        Player/down: bitwise combination (0bXY)
+        X: 0: player1, 1: player2
+        Y: 0: release, 1: click
         '''
         for frame in range(0, len(replay_data), 5): # Iterate through every frame of the macro.
-            last_frame = struct.unpack('i', replay_data[frame:frame+4])[0]
+            last_frame: int = struct.unpack('i', replay_data[frame:frame+4])[0]
 
-            # return true if the byte is 0x02 or 0x03
-            check_if_p2 = lambda: struct.unpack('b', replay_data[frame+4:frame+5])[0] in (0x02, 0x03)
-            is_p2 = False
-            if check_if_p2() in (0x02, 0x03):
-                is_p2 = True
-            # return true if the byte is 0x01 or 0x03
-            check_last_action = lambda: struct.unpack('b', replay_data[frame+4:frame+5])[0] in (0x01, 0x03)
-            last_action = False
-            if check_last_action() in (0x01, 0x03):
-                last_action = True
+            # true if the byte is 0x02 or 0x03
+            is_p2: bool = struct.unpack('b', replay_data[frame+4:frame+5])[0] & 0b10
+            # true if the byte is 0x01 or 0x03
+            last_action: bool = struct.unpack('b', replay_data[frame+4:frame+5])[0] & 0b01
 
             if not is_p2:
-                if last_action:
+                if last_action and not last_click_action:
+                    last_click_action = True
                     '''
                     list of lists:
                     [[frame, 'click'/'release'], ...]
                     '''
                     p1_clicks.append([last_frame, 'click'])
-                elif not last_action:
+                elif not last_action and last_click_action:
+                    last_click_action = False
                     p1_clicks.append([last_frame, 'release'])
+                else:
+                    pass
             else:
-                if last_action:
+                if last_action and not last_p2_click_action:
+                    last_p2_click_action = True
                     '''
                     list of lists:
                     [[frame, 'click'/'release'], ...]
                     '''
                     p2_clicks.append([last_frame, 'click'])
                 elif not last_action:
+                    last_p2_click_action = False
                     p2_clicks.append([last_frame, 'release'])
+                else:
+                    pass
         
-        print(p1_clicks)
         return p1_clicks, p2_clicks, replay_fps
