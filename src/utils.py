@@ -6,6 +6,13 @@ from os import path
 def get_script_path():
     return path.dirname(path.realpath(sys.argv[0]))
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = path.abspath(".")
+    return path.join(base_path, relative_path)
+
 def generate_clicks(
                     p1_clicks: list, 
                     p2_clicks: list,

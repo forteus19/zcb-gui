@@ -8,7 +8,7 @@ from discover_clicks import discover_clicks
 from log import log
 
 ctk.set_appearance_mode("dark")
-ctk.set_default_color_theme(path.join(get_script_path(), "assets", "theme.json"))
+ctk.set_default_color_theme(resource_path("assets\\theme.json"))
 
 class ZCB_GUI(ctk.CTk):
     WIDTH = 550
@@ -44,7 +44,7 @@ class ZCB_GUI(ctk.CTk):
         self.resizable(False, False)
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}")
         # set the icon
-        self.iconphoto(False, PhotoImage(file=path.join(get_script_path(), "assets", "icon.png")))
+        self.iconphoto(False, PhotoImage(file=resource_path("assets\\icon.png")))
 
         # configure grid layout
         self.grid_columnconfigure((0, 1, 2), weight=1)
@@ -156,6 +156,7 @@ class ZCB_GUI(ctk.CTk):
             ("ZBot", "*.zbf"),
             ("ReplayBot", "*.replay"),
         ))
+        if self.MACRO_PATH == "": return
         log.printinfo(f"Selected macro: {self.MACRO_PATH}")
         try:
             if self.MACRO_PATH.endswith(".mhr.json"):
@@ -201,6 +202,7 @@ class ZCB_GUI(ctk.CTk):
             ("WAV file", "*.wav"),
             ("All files", "*.*")
         ))
+        if self.OUTPUT_PATH == "": return
         if not self.OUTPUT_PATH.endswith(".wav"):
             self.OUTPUT_PATH += ".wav"
         log.printinfo(f"Selected output: {self.OUTPUT_PATH}")
