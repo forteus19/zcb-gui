@@ -57,5 +57,20 @@
     "fg_color": "#000000",
     "text_color": "#ffffff",
     "placeholder_text_color": "#aaaaaa"
+  },
+  "CTkComboBox": {
+    "corner_radius": 0,
+    "border_width": 0,
+    "border_color": "#000000",
+    "fg_color": "#462252",
+    "text_color": "#ffffff",
+    "button_color": "#9b4db3",
+    "button_hover_color": "#a064b3",
+    "text_color_disabled": "#ffffff"
+  },
+  "DropdownMenu": {
+    "fg_color": "#462252",
+    "hover_color": "#5d2d6e",
+    "text_color": "#ffffff"
   }
 }

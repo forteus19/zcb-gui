@@ -304,3 +304,55 @@ class parser:
                     pass
         
         return p1_clicks, p2_clicks, replay_fps
+    def parse_txt(replay_file: str):
+        '''
+        Parses .txt (Plain Text) files.
+        Returns:
+        p1_clicks, p2_clicks, replay_fps
+        ~~~~~~~~~  ~~~~~~~~~  ~~~~~~~~~~
+        [frame, 'click'/'release']
+        '''
+
+        lines = replay_file.splitlines()
+        replay_fps = int(lines[0])
+        replay_data = lines[1:]
+        last_click_action = False
+        last_p2_click_action = False
+
+        p1_clicks = []
+        p2_clicks = []
+
+        for frame in replay_data: # Iterate through every frame of the macro.
+            parts = frame.split(' ')
+            last_frame = int(parts[0])
+            is_p2 = parts[2] == '1'
+            last_action = parts[1] == '1'
+
+            if not is_p2:
+                if last_action and not last_click_action:
+                    last_click_action = True
+                    '''
+                    list of lists:
+                    [[frame, 'click'/'release'], ...]
+                    '''
+                    p1_clicks.append([last_frame, 'click'])
+                elif not last_action and last_click_action:
+                    last_click_action = False
+                    p1_clicks.append([last_frame, 'release'])
+                else:
+                    pass
+            else:
+                if last_action and not last_p2_click_action:
+                    last_p2_click_action = True
+                    '''
+                    list of lists:
+                    [[frame, 'click'/'release'], ...]
+                    '''
+                    p2_clicks.append([last_frame, 'click'])
+                elif not last_action:
+                    last_p2_click_action = False
+                    p2_clicks.append([last_frame, 'release'])
+                else:
+                    pass
+    
+        return p1_clicks, p2_clicks, replay_fps
