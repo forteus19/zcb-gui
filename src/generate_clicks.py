@@ -1,31 +1,23 @@
 import random
 from pydub import AudioSegment, effects
 from tqdm import tqdm
+import numpy as np
 
 def generate_clicks(
-                    p1_clicks: list, 
-                    p2_clicks: list,
-                    p1_releases: list,
-                    p2_releases: list,
-                    p1_softclicks: list,
-                    p2_softclicks: list,
-                    p1_softreleases: list,
-                    p2_softreleases: list,
-                    p1_hardclicks: list,
-                    p2_hardclicks: list,
-                    p1_hardreleases: list,
-                    p2_hardreleases: list,
+                    p1_clicks: list, p2_clicks: list,
+                    p1_releases: list, p2_releases: list,
+                    p1_softclicks: list, p2_softclicks: list,
+                    p1_softreleases: list, p2_softreleases: list,
+                    p1_hardclicks: list, p2_hardclicks: list,
+                    p1_hardreleases: list, p2_hardreleases: list,
 
-                    p1_macro: list,
-                    p2_macro: list,
+                    actions: np.ndarray,
                     replay_fps: float,
 
-                    enable_softclicks: bool,
-                    enable_hardclicks: bool,
-                    softclick_duration_option: int,
-                    hardclick_duration_option: int,
-                    randomize_softclicks: bool,
-                    randomize_hardclicks: bool,
+                    enable_softclicks: bool, enable_hardclicks: bool,
+                    softclick_duration_option: int, hardclick_duration_option: int,
+                    randomize_softclicks: bool, randomize_hardclicks: bool,
+
                     output_filename: str,
                     output_format: str,
                     output_sample_rate: int,
@@ -33,191 +25,71 @@ def generate_clicks(
                     use_sound_pitch: bool,
                     normalize_output: bool,
                 ):
-
-    output_sound = AudioSegment.empty()
-    output_sound = output_sound.set_frame_rate(output_sample_rate)
     
-    try:
-        audio_time = (p1_macro[-1][0] / replay_fps + p1_releases[0].duration_seconds if p1_releases[0].duration_seconds != 0 else 1 + 0.2) * 1000
-    except IndexError: 
-        audio_time = (p2_macro[-1][0] / replay_fps + p1_releases[0].duration_seconds if p1_releases[0].duration_seconds != 0 else 1 + 0.2) * 1000
-    
-    output_sound += AudioSegment.silent(audio_time)
-    
-    last_action_time = 0
+    millis = lambda frame, fps: frame / fps * 1000
 
-    both_players_macro = [p1_macro, p2_macro] 
+    audio_time = millis(actions[-1, 0], replay_fps) + 1000
 
-    pbar = tqdm(total=len(p1_macro) + len(p2_macro), colour='green', ascii=True, desc='Progress')
+    output_sound = AudioSegment.silent(duration=audio_time, frame_rate=output_sample_rate)
+    last_action_time = millis(actions[-1, 0], replay_fps)
 
-    current_player = 0
+    pbar = tqdm(total=len(actions), desc="Generating")
 
-    for macro in both_players_macro:
-        current_player += 1 
+    for action in actions:
+        rs = softclick_duration_option
+        rs += random.randint(0, 10) if randomize_softclicks else 0
+        rh = hardclick_duration_option
+        rh += random.randint(0, 10) if randomize_hardclicks else 0
 
-        if current_player == 1:
-            softclicks = p1_softclicks
-            softreleases = p1_softreleases
-            clicks = p1_clicks
-            releases = p1_releases
-            hardclicks = p1_hardclicks
-            hardreleases = p1_hardreleases
-        else:
-            softclicks = p2_softclicks
-            softreleases = p2_softreleases
-            clicks = p2_clicks
-            releases = p2_releases
-            hardclicks = p2_hardclicks
-            hardreleases = p2_hardreleases
+        for i in range(2):
+            player = i + 1
+            clicks = p1_clicks if player == 1 else p2_clicks
+            releases = p1_releases if player == 1 else p2_releases
+            softclicks = p1_softclicks if player == 1 else p2_softclicks
+            softreleases = p1_softreleases if player == 1 else p2_softreleases
+            hardclicks = p1_hardclicks if player == 1 else p2_hardclicks
+            hardreleases = p1_hardreleases if player == 1 else p2_hardreleases
+            frame = millis(action[0], replay_fps)
 
-        softclick_duration = softclick_duration_option
-        hardclick_duration = hardclick_duration_option
-        
-        for action in macro:
-            if randomize_softclicks:
-                rs = random.randint(0, 10)
-            if randomize_hardclicks:
-                rh = random.randint(0, 10)
-            
-            if (action[0] / replay_fps * 1000 - last_action_time < softclick_duration + rs) and enable_softclicks: 
-                if action[1] == 'click':
-                    if use_sound_pitch:
-                        
-                        pitched_sound = random.choice(softclicks)
-                        octaves = random.uniform(-0.1, 0.1) 
-                        new_sample_rate = int(pitched_sound.frame_rate * (1.5 ** octaves))
-                        pitched_sound = pitched_sound._spawn(pitched_sound.raw_data, overrides={'frame_rate': new_sample_rate})
-                        pitched_sound = pitched_sound.set_frame_rate(44100)
-
-                        
-                        output_sound = output_sound.overlay(
-                            seg=pitched_sound,
-                            position=action[0] / replay_fps * 1000, 
-                        )
-                        pbar.update(1) 
-                    else:
-                        
-                        output_sound = output_sound.overlay(
-                            seg=random.choice(softclicks),
-                            position=action[0] / replay_fps * 1000, 
-                        )
-                        pbar.update(1) 
-                else: 
-
-                    if use_sound_pitch:
-                        
-                        pitched_sound = random.choice(softreleases)
-                        octaves = random.uniform(-0.1, 0.1) 
-                        new_sample_rate = int(pitched_sound.frame_rate * (1.5 ** octaves))
-                        pitched_sound = pitched_sound._spawn(pitched_sound.raw_data, overrides={'frame_rate': new_sample_rate})
-                        pitched_sound = pitched_sound.set_frame_rate(44100)
-
-                        
-                        output_sound = output_sound.overlay(
-                            seg=pitched_sound,
-                            position=action[0] / replay_fps * 1000, 
-                        )
-                        pbar.update(1) 
-                    else:
-                        
-                        output_sound = output_sound.overlay(
-                            seg=random.choice(softreleases),
-                            position=action[0] / replay_fps * 1000, 
-                        )
-                        pbar.update(1) 
-            elif (action[0] / replay_fps * 1000 - last_action_time > hardclick_duration + rh) and enable_hardclicks:
-                if action[1] == 'click':
-                    if use_sound_pitch:
-                        pitched_sound = random.choice(hardclicks)
-                        octaves = random.uniform(-0.1, 0.1) 
-                        new_sample_rate = int(pitched_sound.frame_rate * (1.5 ** octaves))
-                        pitched_sound = pitched_sound._spawn(pitched_sound.raw_data, overrides={'frame_rate': new_sample_rate})
-                        pitched_sound = pitched_sound.set_frame_rate(44100)
-                        
-                        output_sound = output_sound.overlay(
-                            seg=pitched_sound,
-                            position=action[0] / replay_fps * 1000, 
-                        )
-                        pbar.update(1) 
-                    else:
-                        output_sound = output_sound.overlay(
-                            seg=random.choice(clicks),
-                            position=action[0] / replay_fps * 1000, 
-                        )
-                        pbar.update(1) 
+            if action[1]:
+                if frame - last_action_time < rs and enable_softclicks:
+                    output_sound = insert_click(random.choice(softclicks), millis(action[0], replay_fps), output_sound, use_sound_pitch)
+                elif frame - last_action_time > rs and enable_hardclicks:
+                    output_sound = insert_click(random.choice(hardclicks), millis(action[0], replay_fps), output_sound, use_sound_pitch)
                 else:
-                    if use_sound_pitch:
-                        pitched_sound = random.choice(hardreleases)
-                        octaves = random.uniform(-0.1, 0.1) 
-                        new_sample_rate = int(pitched_sound.frame_rate * (1.5 ** octaves))
-                        pitched_sound = pitched_sound._spawn(pitched_sound.raw_data, overrides={'frame_rate': new_sample_rate})
-                        pitched_sound = pitched_sound.set_frame_rate(44100)
+                    output_sound = insert_click(random.choice(clicks), millis(action[0], replay_fps), output_sound, use_sound_pitch)
+            else:
+                if frame - last_action_time < rs and enable_softclicks:
+                    output_sound = insert_click(random.choice(softreleases), millis(action[0], replay_fps), output_sound, use_sound_pitch)
+                elif frame - last_action_time > rs and enable_hardclicks:
+                    output_sound = insert_click(random.choice(hardreleases), millis(action[0], replay_fps), output_sound, use_sound_pitch)
+                else:
+                    output_sound = insert_click(random.choice(releases), millis(action[0], replay_fps), output_sound, use_sound_pitch)
+            last_action_time = frame
+            pbar.update(1)
+        
+        pbar.close()
 
-                        
-                        output_sound = output_sound.overlay(
-                            seg=pitched_sound,
-                            position=action[0] / replay_fps * 1000, 
-                        )
-                        pbar.update(1) 
-                    else:
-                        
-                        output_sound = output_sound.overlay(
-                            seg=random.choice(releases),
-                            position=action[0] / replay_fps * 1000, 
-                        )
-                        pbar.update(1)
-            else: 
-                if action[1] == "click":
-                    if use_sound_pitch:
-                        
-                        pitched_sound = random.choice(clicks)
-                        octaves = random.uniform(-0.1, 0.1) 
-                        new_sample_rate = int(pitched_sound.frame_rate * (1.5 ** octaves))
-                        pitched_sound = pitched_sound._spawn(pitched_sound.raw_data, overrides={'frame_rate': new_sample_rate})
-                        pitched_sound = pitched_sound.set_frame_rate(44100)
+        if normalize_output:
+            output_sound = effects.normalize(output_sound)
+        output_sound.export(out_f=output_filename, format=output_format, bitrate=output_bitrate)
 
-                        
-                        output_sound = output_sound.overlay(
-                            seg=pitched_sound,
-                            position=action[0] / replay_fps * 1000, 
-                        )
-                        pbar.update(1) 
-                    else:
-                        
-                        output_sound = output_sound.overlay(
-                            seg=random.choice(clicks),
-                            position=action[0] / replay_fps * 1000, 
-                        )
-                        pbar.update(1) 
-                
-                elif action[1] == "release":
-                    if use_sound_pitch:
-                        
-                        pitched_sound = random.choice(releases)
-                        octaves = random.uniform(-0.1, 0.1) 
-                        new_sample_rate = int(pitched_sound.frame_rate * (1.5 ** octaves))
-                        pitched_sound = pitched_sound._spawn(pitched_sound.raw_data, overrides={'frame_rate': new_sample_rate})
-                        pitched_sound = pitched_sound.set_frame_rate(44100)
-
-                        
-                        output_sound = output_sound.overlay(
-                            seg=pitched_sound,
-                            position=action[0] / replay_fps * 1000, 
-                        )
-                        pbar.update(1) 
-                    else:
-                        
-                        output_sound = output_sound.overlay(
-                            seg=random.choice(releases),
-                            position=action[0] / replay_fps * 1000, 
-                        )
-                        pbar.update(1) 
-
-                last_action_time = action[0] / replay_fps * 1000
+def insert_click(segment, position, current, pitch_sound):
+    if pitch_sound:
+        pitched_sound = segment
+        octaves = random.uniform(-0.1, 0.1) 
+        new_sample_rate = int(pitched_sound.frame_rate * (1.5 ** octaves))
+        pitched_sound = pitched_sound._spawn(pitched_sound.raw_data, overrides={'frame_rate': new_sample_rate})
+        pitched_sound = pitched_sound.set_frame_rate(44100)
+        
+        output = current.overlay(
+            seg=pitched_sound,
+            position=position, 
+        )
+    else:
+        output = current.overlay(
+            seg=segment,
+            position=position, 
+        )
     
-    pbar.close()
-
-    print('\nExporting...')
-    if normalize_output:
-        output_sound = effects.normalize(output_sound)
-    output_sound.export(output_filename, format=output_format, bitrate=output_bitrate)
+    return output
