@@ -1,4 +1,4 @@
-class colors:
+class Colors:
     reset = '\033[0m'
     fg = {
         'red': '\033[31m',
@@ -20,12 +20,21 @@ class colors:
         'white': '\033[47m'
     }
 
-class log:
+
+class Log:
+    @staticmethod
     def printwarn(text):
-        print(f'[{colors.fg["yellow"]}!{colors.reset}]{colors.fg["yellow"]} WARNING: {colors.reset}{text}{colors.reset}')
+        print(
+            f'[{Colors.fg["yellow"]}!{Colors.reset}]{Colors.fg["yellow"]} WARNING: {Colors.reset}{text}{Colors.reset}')
+
+    @staticmethod
     def printerr(text):
-        print(f'[{colors.fg["red"]}-{colors.reset}]{colors.fg["red"]} ERROR: {colors.reset}{text}{colors.reset}')
+        print(f'[{Colors.fg["red"]}-{Colors.reset}]{Colors.fg["red"]} ERROR: {Colors.reset}{text}{Colors.reset}')
+
+    @staticmethod
     def printinfo(text):
-        print(f'[{colors.fg["blue"]}i{colors.reset}]{colors.fg["blue"]} INFO: {colors.reset}{text}{colors.reset}')
+        print(f'[{Colors.fg["blue"]}i{Colors.reset}]{Colors.fg["blue"]} INFO: {Colors.reset}{text}{Colors.reset}')
+
+    @staticmethod
     def printsuccess(text):
-        print(f'[{colors.fg["green"]}+{colors.reset}]{colors.fg["green"]} SUCCESS: {colors.reset}{text}{colors.reset}')
+        print(f'[{Colors.fg["green"]}+{Colors.reset}]{Colors.fg["green"]} SUCCESS: {Colors.reset}{text}{Colors.reset}')

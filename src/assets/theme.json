@@ -23,7 +23,7 @@
       "weight": "normal"
     },
     "Linux": {
-      "family": "Ubuntu",
+      "family": "Roboto",
       "size": 12,
       "weight": "normal"
     }
@@ -72,5 +72,22 @@
     "fg_color": "#462252",
     "hover_color": "#5d2d6e",
     "text_color": "#ffffff"
+  },
+  "CTkTextbox": {
+    "corner_radius": 0,
+    "border_width": 0,
+    "border_color": "#000000",
+    "fg_color": "#222222",
+    "text_color": "#ffffff",
+    "scrollbar_button_color": "#9b4db3",
+    "scrollbar_button_hover_color": "#a064b3"
+  },
+  "CTkScrollbar": {
+    "corner_radius": 0,
+    "border_width": 0,
+    "border_color": "#000000",
+    "fg_color": "#555555",
+    "button_color": "#9b4db3",
+    "button_hover_color": "#a064b3"
   }
 }
