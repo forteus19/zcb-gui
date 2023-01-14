@@ -57,7 +57,7 @@ New stuff:
 Changes:
 - **Rewrote click discovery and click generation from scratch**
 - Made UI more streamlined and compact
-- Code formatted to meet PEP 8 specifications
+- Code formatted to meet (PEP 8)[https://peps.python.org/pep-0008/] specifications
 
 Bug fixes:
 - Fixed ZBot macros calling the wrong function (how did i mess this up)
