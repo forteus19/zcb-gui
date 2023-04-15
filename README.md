@@ -1,3 +1,7 @@
+# WARNING
+
+zcb-gui is still very unstable and probably will be for a while. In the mean time just use the original ZCB or wait for FCB (surprise!)
+
 #  zcb-gui
 
 ZCB, but with a GUI.
