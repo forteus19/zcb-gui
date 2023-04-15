@@ -1,6 +1,6 @@
 # WARNING
 
-zcb-gui is still very unstable and probably will be for a while. In the mean time just use the original ZCB or wait for FCB (surprise!)
+zcb-gui is still in development so it is buggy and unstable. In the mean time just use the original ZCB or wait for FCB (surprise!)
 
 #  zcb-gui
 
