@@ -10,7 +10,6 @@ Currently supported formats:
 - TASBOT
 - Echo
 - MHR Json
-- MHR Binary
 - ZBot (frame)
 - ReplayBot (frame)
 - Plain Text (frame)
