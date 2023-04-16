@@ -220,4 +220,4 @@ def generate_clicks(
     print('\nExporting...')
     if normalize_output:
         output_sound = effects.normalize(output_sound)
-    output_sound.export(output_filename, format=output_format, bitrate=output_bitrate)
+    output_sound.export(output_filename, format=output_format, bitrate=str(output_bitrate))
