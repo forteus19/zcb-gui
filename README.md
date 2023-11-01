@@ -1,6 +1,6 @@
-# WARNING
+# PLS READ
 
-zcb-gui is still in development so it is buggy and unstable. In the mean time just use the original ZCB or wait for FCB (surprise!)
+PLEASE DO NOT USE THIS PROGRAM IT REALLY SUCKS go to the better version: https://github.com/zeozeozeo/zcb3
 
 #  zcb-gui
 
