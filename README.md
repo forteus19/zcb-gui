@@ -1,6 +1,8 @@
 # PLS READ
 
 PLEASE DO NOT USE THIS PROGRAM IT REALLY SUCKS go to the better version: https://github.com/zeozeozeo/zcb3
+PLEASE DO NOT USE THIS PROGRAM IT REALLY SUCKS go to the better version: https://github.com/zeozeozeo/zcb3
+PLEASE DO NOT USE THIS PROGRAM IT REALLY SUCKS go to the better version: https://github.com/zeozeozeo/zcb3
 
 #  zcb-gui
 
